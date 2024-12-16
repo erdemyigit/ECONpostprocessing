@@ -12,8 +12,8 @@ from eleprocessor import EleProcessor
 from files import get_rootfiles
 
 hostid = 'cmseos.fnal.gov'
-path = '/store/group/lpcpfnano/srothman/ECON_Jul26-2023'
-files = get_rootfiles(hostid, path)[:]
+path = '/store/user/eertorer/OptimizedCAE_logOriginalCALQSum_normalization_on/'
+files = get_rootfiles(hostid, path)[:] #Get all the files
 
 f0 = uproot.open(files[0])
 trees = []
@@ -22,22 +22,24 @@ for key in f0.keys():
         trees.append(key[:-2]+'/HGCalTriggerNtuple')
         print(trees[-1])
 
-if len(files) > 10:
-    cluster, client = setup_cluster_on_submit(1, 500)
-
-    runner = Runner(
-        executor=DaskExecutor(client=client, status=True),
-        schema=NanoAODSchema,
-    )
-else:
-    runner = Runner(
-        executor=IterativeExecutor(),
-        schema=NanoAODSchema,
-    )
+#if len(files) > 10:
+#    cluster, client = setup_cluster_on_submit(1, 500)
+#
+#    runner = Runner(
+#        executor=DaskExecutor(client=client, status=True),
+#        schema=NanoAODSchema,
+#    )
+#else:
+runner = Runner(
+    executor=IterativeExecutor(),
+    schema=NanoAODSchema,
+)
 
 for tree in trees:
     splitted = [s for s in re.split("([A-Z][^A-Z]*)", tree) if s]
-    name = splitted[1]
+    name = tree.split('/')[0] #splitted[1]
+    if name == 'Dummy':
+        name = name + splitted[0]
     print(name)
 
     out = runner(
@@ -50,6 +52,6 @@ for tree in trees:
         import pickle
         pickle.dump(out, f)
 
-if len(files) > 10:
-    client.close()
-    cluster.close()
+#if len(files) > 10:
+#    client.close()
+#    cluster.close()

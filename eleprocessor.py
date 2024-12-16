@@ -19,8 +19,16 @@ class EleProcessor(processor.ProcessorABC):
         pass
 
     def process(self, events):
-        genPt = ak.firsts(events.gen.pt) 
+        # Convert filename to an integer
+        filename = events.metadata['filename'].split('ntuple_')[1].split('.root')[0]
+        
+        filename_int = int(filename)
+
+        
+        
+        genPt = ak.firsts(events.gen.pt)
         genEEplus = events.gen.eta > 0
+        
 
         genPlusEta = ak.firsts(events.gen.eta[genEEplus])
         genPlusPhi = ak.firsts(events.gen.phi[genEEplus])
@@ -34,29 +42,29 @@ class EleProcessor(processor.ProcessorABC):
         EEplus = recoEta > 0
         EEminus = recoEta < 0
 
-
         plusIdx, plusDR = find_closest(genPlusEta, genPlusPhi, recoEta[EEplus], recoPhi[EEplus])
-        passPlus = plusDR < 0.05
-
+        passPlus = plusDR < 0.1
         minusIdx, minusDR = find_closest(genMinusEta, genMinusPhi, recoEta[EEminus], recoPhi[EEminus])
-        passMinus = minusDR < 0.05
+        passMinus = minusDR < 0.1
 
+        passPlus = ak.fill_none(passPlus, False)
+        passMinus = ak.fill_none(passMinus, False)
 
-        recoPlusPt =  ak.firsts(recoPt[EEplus][plusIdx])
+        recoPlusPt = ak.firsts(recoPt[EEplus][plusIdx])
         recoPlusEta = ak.firsts(recoEta[EEplus][plusIdx])
         recoPlusPhi = ak.firsts(recoPhi[EEplus][plusIdx])
 
-        recoMinusPt =  ak.firsts(recoPt[EEminus][minusIdx])
+        recoMinusPt = ak.firsts(recoPt[EEminus][minusIdx])
         recoMinusEta = ak.firsts(recoEta[EEminus][minusIdx])
         recoMinusPhi = ak.firsts(recoPhi[EEminus][minusIdx])
 
-        plusPtErr = (recoPlusPt - genPt)/genPt
-        minusPtErr = (recoMinusPt - genPt)/genPt
+        plusPtErr = (recoPlusPt - genPt) / genPt
+        minusPtErr = (recoMinusPt - genPt) / genPt
 
         H = hist.Hist(
-            hist.axis.Regular(100, -1, 1, name='ptErr', label='(reco pt - gen pt)/gen pt'),
+            hist.axis.Regular(200, -1, 3, name='ptErr', label='(reco pt - gen pt)/gen pt'),
             hist.axis.Regular(50, 0, 100, name='genPt', label='gen pt'),
-            hist.axis.Regular(50, 1.4, 3.0, name='eta', label='gen eta'),
+            hist.axis.Regular(5, 1.4, 3.0, name='eta', label='gen eta'),
         )
 
         H.fill(
@@ -69,9 +77,33 @@ class EleProcessor(processor.ProcessorABC):
             ptErr=minusPtErr[passMinus],
             genPt=genPt[passMinus],
             eta=np.abs(genMinusEta[passMinus]),
-        )   
+        )
+        
+        combined_genPt = ak.concatenate([genPt[passPlus], genPt[passMinus]], axis=0)
+        combined_ptErr = ak.concatenate([plusPtErr[passPlus], minusPtErr[passMinus]], axis=0)
+        combined_eta = ak.concatenate([genPlusEta[passPlus], genMinusEta[passMinus]], axis=0)
+        
+        # Generate event index
+        event_index = np.arange(len(combined_eta))
 
-        return {'hist': H}
+        # Create a unique event ID by combining filename and event index
+        unique_event_id = filename_int * (10 ** (len(str(len(event_index)))+3)) + event_index
+        
+        # Convert unique_event_id to Awkward Array
+        combined_event_id = ak.Array(unique_event_id)
+        
+        # Combine plus and minus data
+        
+        # Collect the point-level data with identifiers
+        data = {
+            'event_id': combined_event_id.to_list(),
+            'genPt': combined_genPt.to_list(),
+            'ptErr': combined_ptErr.to_list(),
+            'eta': combined_eta.to_list(),
+        }
+
+        return {'hist': H, 'data': data}
+
 
     def postprocess(self, accumulator):
         pass
