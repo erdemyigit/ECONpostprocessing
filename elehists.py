@@ -12,7 +12,7 @@ from eleprocessor import EleProcessor
 from files import get_rootfiles
 
 hostid = 'cmseos.fnal.gov'
-path = '/store/user/eertorer/OptimizedCAE_logOriginalCALQSum_normalization_on/'
+path = '/store/user/eertorer/Papermodel_12-16-24/'
 files = get_rootfiles(hostid, path)[:] #Get all the files
 
 f0 = uproot.open(files[0])

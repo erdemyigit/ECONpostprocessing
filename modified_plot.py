@@ -15,7 +15,7 @@ def cruijff(x, norm, mu, sigmaL, sigmaR, alphaL, alphaR):
 
 # Files is the list of files you want to run, and the names is how you will name them
 
-files = ["eles_FloatingpointoptimizedCAEv1DummyHistomaxDummynTuple.pkl","eles_FloatingpointoptimizedCAEv2DummyHistomaxDummynTuple.pkl","eles_FloatingpointThreshold0DummyHistomaxDummynTuple.pkl","eles_FloatingpointThreshold135DummyHistomaxDummynTuple.pkl"]#,
+files = ["eles_Floatingpointredotelecaebiased90combinedv1modelDummyHistomaxDummynTuple.pkl","eles_Floatingpointredotelecaebiased90combinedv2modelDummyHistomaxDummynTuple.pkl","eles_FloatingpointThreshold0DummyHistomaxDummynTuple.pkl","eles_FloatingpointThreshold135DummyHistomaxDummynTuple.pkl"]#,
 
 names = ["Optimized_v1","Optimized_v2","Threshold0",
         "Threshold135"]#,
